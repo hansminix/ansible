@@ -1,0 +1,19 @@
+{
+    "customers": [ 
+        {
+            "name": "linux_update",
+            "clients": ["10.0.0.0/8","145.21.96.0/20"],
+            "destinations": ["ubuntu.com","redhat.com"]
+        },
+        {
+            "name": "wsus",
+            "clients": ["10.0.0.0/8","145.21.96.0/20"],
+            "destinations": ["windows.com"]
+        },
+        {
+            "name": "docker",
+            "clients": ["10.0.0.0/8","145.21.96.0/20"],
+            "destinations": ["ubuntu.com","docker.com"]
+        }
+    ]
+}

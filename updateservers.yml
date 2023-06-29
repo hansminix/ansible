@@ -1,0 +1,28 @@
+---
+  - name: ReadJsonfile
+    hosts: localhost
+    tasks:
+      - name: Display the JSON file content
+        shell: cat updateservers.json
+        register: result
+      - name: save the Json data to a Variable as a Fact
+        set_fact:
+          jsondata: "{{ result.stdout | from_json }}"
+      - name: getDestinations
+        set_fact:
+          destinations: "{{ jsondata | json_query(jmesquery) }}"
+        vars:
+          jmesquery: 'customers[*].destinations'
+      - name: Initialize an empty list for our strings
+        set_fact:
+          destcomplete: []
+      - name: Merge all destinations
+        set_fact: 
+          destcomplete: "{{ destcomplete + item}}"
+        with_items: 
+          - "{{ destinations }}"
+      - name: Remove duplicates
+        set_fact: 
+          destcomplete: "{{ destcomplete | unique }}"
+      - name: Display destinations
+        debug: msg=" Destinations => {{ destcomplete }}"
