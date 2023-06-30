@@ -1,5 +1,5 @@
 ---
-  - name: ReadJsonfile
+  - name: UpdateServers
     hosts: localhost
     tasks:
       - name: Display the JSON file content
@@ -26,3 +26,6 @@
           destcomplete: "{{ destcomplete | unique }}"
       - name: Display destinations
         debug: msg=" Destinations => {{ destcomplete }}"
+      - name: Maak CUG5 configuratie
+        include_role:
+          name: cug5
