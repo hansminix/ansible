@@ -1,0 +1,18 @@
+cache_peer 192.168.1.5 parent 443 0 no-query originserver login=PASSTHRU name=infoblox 
+
+{% for customer in jsondata.customers -%}
+{% for client in customer.clients -%}
+acl updateserver_{{ customer.name }}_src src {{ client }}
+{% endfor %}
+{% endfor %}
+
+{% for customer in jsondata.customers -%}
+{% for destination in customer.destinations -%}
+acl updateserver_{{ customer.name }}_dst dstdomain {{ destination }}
+{% endfor %}
+{% endfor %}
+
+{% for customer in jsondata.customers -%}
+cache_peer_access infoblox allow updateserver_{{ customer.name }}_src
+http_access allow updateserver_{{ customer.name }}_src updateserver_{{ customer.name }}_dst
+{% endfor %}

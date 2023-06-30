@@ -1,0 +1,4 @@
+- name: Maak configuratie voor update servers
+  ansible.builtin.template:
+       src: updateconfig.j2
+       dest: /tmp/updateserver.conf
