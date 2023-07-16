@@ -1,0 +1,19 @@
+---
+  - name: GatherVariables
+    hosts: squidservers
+    connection: local
+
+    handlers:
+    - name: Here are my custom common handlers
+      # You can also look at include_tasks: handlers.yml
+      import_tasks: handlers.yml
+      
+    tasks:
+      - name: Show ports
+        debug:
+          var: ports
+      - name: Create ports configuration
+        ansible.builtin.template:
+          src: updateportconfig.j2
+          dest: /tmp/ports.conf
+        notify: Restart Squid

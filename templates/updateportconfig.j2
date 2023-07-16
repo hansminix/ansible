@@ -1,0 +1,5 @@
+#Always add localhost with 3128 for squidclient
+http_port 127.0.0.1:3128
+{% for port in ports %}
+http_port {{ ansible_eth0.ipv4.address }}:{{ port.port }} {% if ports.options %} {{ ports.options }} {% endif %}
+{% endfor %}
