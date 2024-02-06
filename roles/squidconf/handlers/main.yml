@@ -1,0 +1,9 @@
+- name: Maak Backup
+  debug: msg="Backup?"
+  #shell: sudo tar cvf ~/squidconf.tar /etc/squid
+  #register: resbackup
+  #notify: Check backup
+
+- name: Check backup
+  fail: msg="Fout bij maken backup"
+  when: resbackup.rc != 0

@@ -1,0 +1,2 @@
+testname: 'v5a0m681'
+testreplace: "{{ (testname) | replace('v5', 'vb') }}"

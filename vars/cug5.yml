@@ -1,0 +1,42 @@
+forwardproxy:
+  - naam: test1
+    sources:
+      - 192.168.1.1
+      - 192.168.2.1
+    destinationhosts:
+      - ad.nl
+      - nu.nl
+      - vk.nl
+  - naam: Test2
+    sources:
+      - 192.168.2.1
+      - 192.168.3.1
+    destinationhosts:
+      - nu.nl
+      - vk.nl
+    destinationips:
+      - 145.21.168.23
+    destinationurls:
+      - https://nu.nl/test
+
+cpproxy:
+  caches:
+    - naam: cug5
+      ipadres: 145.21.102.10
+      port: 8080
+    - naam: backend
+      ipadres: 10.60.60.60
+      port: 8080
+  configurations:
+    - naam: Test3
+      sources:
+        - 192.168.2.2
+        - 192.168.3.2
+      destinationhosts:
+        - nu2.nl
+        - vk2.nl
+      destinationips:
+        - 145.21.168.24
+      destinationurls:
+        - https://nu.nl/test2
+      cachepeer: cug5

@@ -1,0 +1,78 @@
+# -------------------------------------------------------------------------------------------- #
+# Dit bestand wordt beheerd vanuit Ansible
+# Toelichting staat in https://dwrd.mindef.nl/sites/SWR008866/Gesloten%20Bibliotheek/IEGI/Componenten/Squid/Inrichtingsdocument/INT-IN010%20Basisinrichting%20Squid.docx
+# -------------------------------------------------------------------------------------------- #
+
+error_default_language nl
+error_directory /usr/share/squid/errors/nl/
+{# First check if management interface is configured, then add ports to it #}
+{% if mgmtip %}
+#Luister op management adres
+{% for port in ports.management %}
+http_port {{ mgmtip }}:{{ port.port }} {{ port.options }}
+{% endfor %}
+{% endif %}
+{# First check if productie interface is configured, then add ports to it #}
+{% if prodip %}
+#Luister op productie adres
+{% for port in ports.productie %}
+http_port {{ prodip }}:{{ port.port }} {{ port.options }}
+{% endfor %}
+{% endif %}
+
+#Logging
+{% raw %}
+logformat AccessLog %{%d-%b-%Y %H:%M:%S}tl.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %un %Sh/%<a %mt %ea "%{User-Agent}>h"
+{% endraw %}
+acl exclude_log url_regex -i 127\.0\.0\.1
+acl exclude_log url_regex -i cache_object
+access_log none exclude_log
+{# Turn off local logging when lot of traffice #}
+{% if local_log == 'yes' -%}
+access_log daemon:/var/log/squid/access.log AccessLog 
+{% endif %}
+logfile_rotate 0
+access_log syslog:local6.info AccessLog
+cache_log /var/log/squid/cache.log 
+strip_query_terms off
+
+#Algemeen		 
+httpd_suppress_version_string on
+request_header_access X-Forwarded-For deny all
+pipeline_prefetch 0
+
+coredump_dir /var/log/squid
+maximum_object_size 512 KB
+cache_replacement_policy lru
+memory_replacement_policy lru
+cache_store_log none
+cache_mem 256 MB
+maximum_object_size_in_memory 256 KB
+max_filedescriptors 65535
+
+#Standaard acccess voor squidclient
+http_access allow localhost manager
+http_access deny manager
+
+#SSL_PORTS to minimize tunnels
+{% for sslport in sslports %}
+acl SSL_ports port {{ sslport }}
+{% endfor %}
+{% if sslports -%}
+acl CONNECT method CONNECT
+http_access deny CONNECT !SSL_ports
+{% endif %}
+
+#Default includes
+include /etc/squid/conf.d/*.conf
+
+{% if ICAP == 'yes' -%}
+include /etc/squid/icap.conf
+#Extra deny op ICAP om overbelasting AV scanners te voorkomen
+adaptation_access icap_req deny all
+adaptation_access icap_resp deny all
+{% endif %}
+
+#Algemene drop regel					
+http_access deny all
+

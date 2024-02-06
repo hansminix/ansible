@@ -1,0 +1,7 @@
+- name: Maak Backup
+  expect:
+    command: sudo tar -cf /tmp/squidconf.tar /etc/squid
+    responses: 
+      '\[sudo\] password for': "{{ sudo_pass }}"
+  no_log: true
+  

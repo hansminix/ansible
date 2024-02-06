@@ -1,0 +1,48 @@
+#- block:
+#  - read_csv:
+#      path: {{ csvdir }}/forwardproxy.csv
+#    register: forwardproxy
+#  delegate_to: localhost
+#  run_once: true
+- name: Remove lo interface form list with interfaces
+  set_fact:
+    interfaces: "{{ ansible_interfaces | difference(['lo']) | sort }}"
+
+- name: "Get management IP"
+  set_fact:
+    mgmtip: "{{ hostvars[inventory_hostname]['ansible_%s' | format(interfaces.0)].ipv4.address }}"
+  when: interfaces.0 is defined
+
+- name: "Get production IP"
+  set_fact:
+    prodip: "{{ hostvars[inventory_hostname]['ansible_%s' | format(interfaces.1)].ipv4.address}}"
+  when: interfaces.1 is defined
+
+- name: Show var
+  debug:
+    msg: "{{ testreplace }}"
+  #with_items: "{{ ansible_interfaces }}"
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /tmp/squid/conf.d
+    state: directory
+    mode: '0755'
+- name: Copy icap.conf if ICAP
+  ansible.builtin.copy:
+    src: scripts/squidparse.sh
+    dest: /tmp/squid
+  when: ICAP == 'yes'
+- name: Maak basis configuratie voor squid servers
+  ansible.builtin.template:
+    src: squidconf.j2
+    dest: /tmp/squid/squid.conf
+- name: Maak forward proxy configuraties voor squid servers
+  ansible.builtin.template:
+    src: forwardproxy.j2
+    dest: /tmp/squid/conf.d/000_forwardproxy.conf
+- name: Maak cachepeer proxy configuraties voor squid servers
+  ansible.builtin.template:
+    src: cachepeer.j2
+    dest: /tmp/squid/conf.d/000_cachepeer.conf      
+  notify: Restart Squid

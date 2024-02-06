@@ -1,0 +1,45 @@
+{# Template voor forward proxy configuraties #}
+{# Maak eerst alle caches aan #}
+#Cache_peer configurations
+{% for cp in cpproxy.caches %}
+cache_peer {{ cp.ipadres }} parent {{ cp.port }} 0 no-digest no-query proxy-only name=cp_{{ cp.naam }}
+{% endfor %}
+
+{# Maak nu alle acl's aan #}
+{% for klant in cpproxy.configurations %}
+{# Eerst source acl #}
+#Configuratie voor {{ klant.naam }}
+{% for source in klant.sources %}
+acl {{ klant.naam }}_src src {{ source }}
+{% endfor %}
+{% if 'destinationhosts' in klant %}
+{% for source in klant.destinationhosts %}
+acl {{ klant.naam }}_dstdomain  dstdomain {{ source }}
+{% endfor %}
+http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstdomain
+always_direct deny {{ klant.naam }}_dstdomain
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dstdomain
+never_direct allow {{ klant.naam }}_dstdomain
+{% endif %}
+
+{% if 'destinationips' in klant %}
+{% for source in klant.destinationips %}
+acl {{ klant.naam }}_dstips dst {{ source }}
+{% endfor %}
+http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstips
+always_direct deny {{ klant.naam }}_dstips
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dstips
+never_direct allow {{ klant.naam }}_dstips
+{% endif %}
+
+{% if 'destinationurls' in klant %}
+{% for source in klant.destinationurls %}
+acl {{ klant.naam }}_dsturls  url_regex -i {{ source }}
+{% endfor %}
+http_access allow {{ klant.naam }}_src {{ klant.naam }}_dsturls
+always_direct deny {{ klant.naam }}_dsturls
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dsturls
+never_direct allow {{ klant.naam }}_dsturls
+{% endif %}
+
+{% endfor %}

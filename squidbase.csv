@@ -1,0 +1,2 @@
+cluster,host,local_log,ssl_ports,includes
+base,localhost,1,443|8443,icap.conf

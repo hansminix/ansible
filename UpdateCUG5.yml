@@ -1,0 +1,27 @@
+---
+  - name: UpdateCUG5
+    hosts: squidtest
+    vars_files:
+      - vars/cug5.yml
+    vars_prompt:
+    - name: sudo_pass
+      prompt: What is your sudo password?
+    handlers:
+    - name: Here are my custom common handlers
+      # You can also look at include_tasks: handlers.yml
+      import_tasks: handlers.yml
+      
+    tasks:
+      - name: Include Backup
+        include_tasks: CreateSquidBackup.yml
+      - name: Maak basis configuratie
+        include_role:
+          name: squidconf
+      - name: Maak forward proxy configuratie
+        include_role:
+          name: forwardproxy
+      - name: Maak cache_peer proxy configuratie
+        include_role:
+          name: cache_peer
+      - name: Include Restart
+        include_tasks: check_and_reload_squid.yml
