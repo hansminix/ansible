@@ -12,8 +12,6 @@
       import_tasks: handlers.yml
       
     tasks:
-      - name: Show pass
-        debug: msg="{{ ansible_become_pass }}"
       - name: Show pass2
         debug: msg="{{ ansible_sudo_pass }}"
       - name: Include Backup
