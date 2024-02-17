@@ -14,7 +14,7 @@
     - name: Reload squid
       shell: /usr/bin/systemctl reload squid.service
       become: true 
-      ignore_errors: True
+#      ignore_errors: True
       register: reload_squid
   rescue:
     - name: Restore backup in case of error
