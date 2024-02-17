@@ -1,31 +1,32 @@
 {# Template voor forward proxy configuraties #}
 {# Loop over alle klanten #}
 {% for klant in forwardproxy %}
+{% set loop_ctr = loop.index -%}
 {# Eerst source acl #}
-#Configuratie voor {{ klant.naam }}
+#Configuratie voor {{ loop_ctr }}_{{ klant.naam }}
 {% for source in klant.sources %}
-acl {{ klant.naam }}_src src {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_src src {{ source }}
 {% endfor %}
 
 {% if 'destinationhosts' in klant %}
 {% for source in klant.destinationhosts %}
-acl {{ klant.naam }}_dstdomain dstdomain {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dstdomain dstdomain {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstdomain
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstdomain
 {% endif %}
 
 {% if 'destinationips' in klant %}
 {% for source in klant.destinationips %}
-acl {{ klant.naam }}_dstips dst {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dstips dst {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstips
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstips
 {% endif %}
 
 {% if 'destinationurls' in klant %}
 {% for source in klant.destinationurls %}
-acl {{ klant.naam }}_dsturls  url_regex -i {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dsturls  url_regex -i {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dsturls
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dsturls
 {% endif %}
 
 {% endfor %}

@@ -7,39 +7,40 @@ cache_peer {{ cp.ipadres }} parent {{ cp.port }} 0 no-digest no-query proxy-only
 
 {# Maak nu alle acl's aan #}
 {% for klant in cpproxy.configurations %}
+{% set loop_ctr = loop.index -%}
 {# Eerst source acl #}
-#Configuratie voor {{ klant.naam }}
+#Configuratie voor {{ loop_ctr }}_{{ klant.naam }}
 {% for source in klant.sources %}
-acl {{ klant.naam }}_src src {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_src src {{ source }}
 {% endfor %}
 {% if 'destinationhosts' in klant %}
 {% for source in klant.destinationhosts %}
-acl {{ klant.naam }}_dstdomain  dstdomain {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dstdomain  dstdomain {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstdomain
-always_direct deny {{ klant.naam }}_dstdomain
-cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dstdomain
-never_direct allow {{ klant.naam }}_dstdomain
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstdomain
+always_direct deny {{ loop_ctr }}_{{ klant.naam }}_dstdomain
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstdomain
+never_direct allow {{ loop_ctr }}_{{ klant.naam }}_dstdomain
 {% endif %}
 
 {% if 'destinationips' in klant %}
 {% for source in klant.destinationips %}
-acl {{ klant.naam }}_dstips dst {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dstips dst {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dstips
-always_direct deny {{ klant.naam }}_dstips
-cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dstips
-never_direct allow {{ klant.naam }}_dstips
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstips
+always_direct deny {{ loop_ctr }}_{{ klant.naam }}_dstips
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dstips
+never_direct allow {{ loop_ctr }}_{{ klant.naam }}_dstips
 {% endif %}
 
 {% if 'destinationurls' in klant %}
 {% for source in klant.destinationurls %}
-acl {{ klant.naam }}_dsturls  url_regex -i {{ source }}
+acl {{ loop_ctr }}_{{ klant.naam }}_dsturls  url_regex -i {{ source }}
 {% endfor %}
-http_access allow {{ klant.naam }}_src {{ klant.naam }}_dsturls
-always_direct deny {{ klant.naam }}_dsturls
-cache_peer_access cp_{{ klant.cachepeer }} allow {{ klant.naam }}_src {{ klant.naam }}_dsturls
-never_direct allow {{ klant.naam }}_dsturls
+http_access allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dsturls
+always_direct deny {{ loop_ctr }}_{{ klant.naam }}_dsturls
+cache_peer_access cp_{{ klant.cachepeer }} allow {{ loop_ctr }}_{{ klant.naam }}_src {{ loop_ctr }}_{{ klant.naam }}_dsturls
+never_direct allow {{ loop_ctr }}_{{ klant.naam }}_dsturls
 {% endif %}
 
 {% endfor %}

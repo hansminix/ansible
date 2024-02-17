@@ -28,7 +28,7 @@ acl exclude_log url_regex -i 127\.0\.0\.1
 acl exclude_log url_regex -i cache_object
 access_log none exclude_log
 {# Turn off local logging when lot of traffice #}
-{% if local_log == 'yes' -%}
+{% if local_log -%}
 access_log daemon:/var/log/squid/access.log AccessLog 
 {% endif %}
 logfile_rotate 0
@@ -66,7 +66,7 @@ http_access deny CONNECT !SSL_ports
 #Default includes
 include /etc/squid/conf.d/*.conf
 
-{% if ICAP == 'yes' -%}
+{% if ICAP -%}
 include /etc/squid/icap.conf
 #Extra deny op ICAP om overbelasting AV scanners te voorkomen
 adaptation_access icap_req deny all

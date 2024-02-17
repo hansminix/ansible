@@ -1,11 +1,11 @@
 ---
   - name: UpdateCUG5
-    hosts: squidtest
+    hosts: cenbo_cug5
     vars_files:
       - vars/cug5.yml
-    vars_prompt:
-    - name: sudo_pass
-      prompt: What is your sudo password?
+#    vars_prompt:
+#    - name: sudo_pass
+#      prompt: What is your sudo password?
     handlers:
     - name: Here are my custom common handlers
       # You can also look at include_tasks: handlers.yml
