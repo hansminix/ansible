@@ -2,6 +2,6 @@
   expect:
     command: sudo tar -cf /tmp/squidconf.tar /etc/squid
     responses: 
-      '\[sudo\] password for': "{{ sudo_pass }}"
+      '\[sudo\] password for': "{{ ansible_become_pass }}"
   no_log: true
   
