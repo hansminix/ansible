@@ -1,7 +1,9 @@
 - name: Maak Backup
-  expect:
-    command: sudo tar -cf /tmp/squidconf.tar /etc/squid
-    responses: 
-      '\[sudo\] password for': "{{ ansible_become_pass }}"
+  shell: tar -cf /tmp/squidconf.tar /etc/squid
+  become: true
+#  expect:
+#    command: sudo tar -cf /tmp/squidconf.tar /etc/squid
+#    responses: 
+#      '\[sudo\] password for': "{{ ansible_become_pass }}"
 #  no_log: true
   
