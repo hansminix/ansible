@@ -12,8 +12,6 @@
       import_tasks: handlers.yml
       
     tasks:
-      - name: Show pass2
-        debug: msg="{{ ansible_sudo_pass }}"
       - name: Include Backup
         include_tasks: CreateSquidBackup.yml
       - name: Maak basis configuratie
