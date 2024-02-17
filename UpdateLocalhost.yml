@@ -3,62 +3,14 @@
     hosts: squidtest
     vars_files:
       - vars/cug5.yml
-    vars_prompt:
-    - name: ansible_become_pass
-      prompt: What is your sudo password?
-    handlers:
-    - name: Here are my custom common handlers
+#    vars_prompt:
+#    - name: ansible_become_pass
+#      prompt: What is your sudo password?
+#    handlers:
+#    - name: Here are my custom common handlers
       # You can also look at include_tasks: handlers.yml
-      import_tasks: handlers.yml
-      
+#      import_tasks: handlers.yml
     tasks:
-      - name: Maak Backup
-        expect:
-          command: sudo tar -cf /tmp/squidconf.tar /etc/squid
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        no_log: true
-      - name: Maak basis configuratie
-        include_role:
-          name: squidconf
-      - name: Copy squidparse script
-        ansible.builtin.copy:
-          src: scripts/squidparse.sh
-          dest: /tmp/
-      - name: Check squid syntax
-        expect:
-          command: bash /tmp/squidparse.sh
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        register: squidparse_err
-      - name: Show errors if any
-        debug: msg="{{ squidparse_err }}"
       - name: Reload squid
-        expect:
-          command: sudo systemctl reload squid
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        when: not squidparse_err
-      - name: Check status squid
-        expect:
-          command: sudo systemctl reload squid
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        register: reload_squid
-      - name: Restore backup in case of error
-        expect:
-          command: sudo tar -xf /tmp/squidconf.tar -C /
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        when: squidparse_err or reload_squid.rc !=0
-      - name: Restart old squid config when reload unsuccesful
-        expect:
-          command: sudo systemctl restart squid
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
-        when: reload_squid.rc !=0
-      - name: Remove backup
-        expect:
-          command: sudo rm /tmp/squidconf.tar
-          responses: 
-            '\[sudo\] password for': "{{ ansible_become_pass }}"
+        shell: systemctl reload squid
+        become: true     

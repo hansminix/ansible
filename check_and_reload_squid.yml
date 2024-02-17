@@ -12,14 +12,10 @@
         squidparse_err: "{{ squidout.stderr_lines|select('regex', '.*WARNING.*|.*ERROR.*|.*FATAL.*')|list }}"
       failed_when: (squidparse_err | length > 0)
     - name: Reload squid
-      shell: systemctl reload squid
+      shell: /usr/bin/systemctl reload squid.service
       become: true 
       ignore_errors: True
-    - name: Reload squid configuration
-      shell: systemctl reload squid
-      become: true 
       register: reload_squid
-      #failed_when: reload_squid.rc != 0
   rescue:
     - name: Restore backup in case of error
       shell: tar -xf /tmp/squidconf.tar -C /
