@@ -3,5 +3,5 @@
     command: sudo tar -cf /tmp/squidconf.tar /etc/squid
     responses: 
       '\[sudo\] password for': "{{ ansible_become_pass }}"
-  no_log: true
+#  no_log: true
   
