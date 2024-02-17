@@ -1,12 +1,10 @@
 - name: Sync tijdelijke directory met /etc/squid
-  expect:
-    command: sudo rsync -av /tmp/squid/ /etc/squid/
-    responses: 
-      '\[sudo\] password for': "{{ ansible_become_pass }}"
+  shell: sudo rsync -av /tmp/squid/ /etc/squid/
+  become: true 
 - name: Check and reload Squid
   block:
     - name: Check squid syntax
-      command: squid -k parse
+      shell: squid -k parse
       register: squidout
       failed_when: false
       no_log: True
@@ -14,41 +12,29 @@
         squidparse_err: "{{ squidout.stderr_lines|select('regex', '.*WARNING.*|.*ERROR.*|.*FATAL.*')|list }}"
       failed_when: (squidparse_err | length > 0)
     - name: Reload squid
-      expect:
-        command: sudo systemctl reload squid
-        responses: 
-          '\[sudo\] password for': "{{ ansible_become_pass }}"
+      shell: sudo systemctl reload squid
+      become: true 
       ignore_errors: True
     - name: Reload squid configuration
-      expect:
-        command: sudo systemctl reload squid
-        responses: 
-          '\[sudo\] password for': "{{ ansible_become_pass }}"
+      shell: sudo systemctl reload squid
+      become: true 
       register: reload_squid
       #failed_when: reload_squid.rc != 0
   rescue:
     - name: Restore backup in case of error
-      expect:
-        command: sudo tar -xf /tmp/squidconf.tar -C /
-        responses: 
-          '\[sudo\] password for': "{{ ansible_become_pass }}"
+      shell: sudo tar -xf /tmp/squidconf.tar -C /
+      become: true 
     - name: Restart old squid config when reload unsuccesful
-      expect:
-        command: sudo systemctl restart squid
-        responses: 
-          '\[sudo\] password for': "{{ ansible_become_pass }}"
-        timeout: 35
+      shell: sudo systemctl restart squid
+      become: true 
+      timeout: 35
       when: (reload_squid is defined) and (reload_squid.rc != 0)
     - name: Remove backup
-      expect:
-        command: sudo rm /tmp/squidconf.tar
-        responses: 
-          '\[sudo\] password for': "{{ ansible_become_pass }}"
+      shell: sudo rm /tmp/squidconf.tar
+      become: true 
     - name: Fail playbook in case of errors
       debug: msg="Updating squid failed, please check output."
       failed_when: true
 - name: Remove backup
-  expect:
-    command: sudo rm /tmp/squidconf.tar
-    responses: 
-      '\[sudo\] password for': "{{ ansible_become_pass }}"
+  shell: sudo rm /tmp/squidconf.tar
+  become: true 
