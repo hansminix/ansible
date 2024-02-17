@@ -1,5 +1,5 @@
 - name: Sync tijdelijke directory met /etc/squid
-  shell: sudo rsync -av /tmp/squid/ /etc/squid/
+  shell: rsync -av /tmp/squid/ /etc/squid/
   become: true 
 - name: Check and reload Squid
   block:
@@ -12,29 +12,29 @@
         squidparse_err: "{{ squidout.stderr_lines|select('regex', '.*WARNING.*|.*ERROR.*|.*FATAL.*')|list }}"
       failed_when: (squidparse_err | length > 0)
     - name: Reload squid
-      shell: sudo systemctl reload squid
+      shell: systemctl reload squid
       become: true 
       ignore_errors: True
     - name: Reload squid configuration
-      shell: sudo systemctl reload squid
+      shell: systemctl reload squid
       become: true 
       register: reload_squid
       #failed_when: reload_squid.rc != 0
   rescue:
     - name: Restore backup in case of error
-      shell: sudo tar -xf /tmp/squidconf.tar -C /
+      shell: tar -xf /tmp/squidconf.tar -C /
       become: true 
     - name: Restart old squid config when reload unsuccesful
-      shell: sudo systemctl restart squid
+      shell: systemctl restart squid
       become: true 
       timeout: 35
       when: (reload_squid is defined) and (reload_squid.rc != 0)
     - name: Remove backup
-      shell: sudo rm /tmp/squidconf.tar
+      shell: rm /tmp/squidconf.tar
       become: true 
     - name: Fail playbook in case of errors
       debug: msg="Updating squid failed, please check output."
       failed_when: true
 - name: Remove backup
-  shell: sudo rm /tmp/squidconf.tar
+  shell: rm /tmp/squidconf.tar
   become: true 
