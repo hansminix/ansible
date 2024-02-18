@@ -12,8 +12,11 @@
         squidparse_err: "{{ squidout.stderr_lines|select('regex', '.*WARNING.*|.*ERROR.*|.*FATAL.*')|list }}"
       failed_when: (squidparse_err | length > 0)
     - name: Reload squid
-      shell: /usr/bin/systemctl reload squid.service
+      ansible.builtin.systemd_service:
+        name: squid.service
+        state: reloaded
       become: true 
+#      shell: /usr/bin/systemctl reload squid.service
 #      ignore_errors: True
 #      register: reload_squid
   rescue:
