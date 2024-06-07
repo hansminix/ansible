@@ -1,0 +1,53 @@
+all:
+  children:
+    zabbix:
+      hosts:
+        zabbixserver.lan:
+        zabbixproxy.lan:
+      vars:
+        packages:
+          - zabbix-selinux-policy 
+          - net-snmp
+          - net-snmp-perl
+          - net-snmp-utils
+          - zabbix-agent
+        zabbixfiles:
+          - filename: zabbix_trap_receiver.pl
+            filedestination: /var/lib/zabbix/zabbix_trap_receiver.pl
+            fileowner: root
+            filegroup: root
+            filemode: '0750'
+        zabbixservices:
+          - snmptrapd
+        
+    zabbixservers:
+      hosts:
+        zabbixserver.lan
+      vars:
+        serverpackages:
+          - zabbix-server-mysql 
+          - zabbix-web-mysql 
+          - zabbix-apache-conf 
+          - zabbix-sql-scripts 
+          - zabbix-selinux-policy 
+          - mariadb-server
+          - python3-PyMySQL
+        dbpasswd: DBS3cr3t
+        mysql_password: heelmoeilijkwachtwoord1234
+        zabbixconf:
+          DBHost: localhost
+          DBName: zabbix
+          DBUser: zabbix
+          DBPassword: DBS3cr3t
+          SNMPTrapperFile: /var/log/snmptrap/snmptrap.log
+          StartSNMPTrapper: 1
+        zabbixconffile: /etc/zabbix/zabbix_server.conf
+    zabbixproxies:
+      hosts:
+        zabbixproxy.lan:
+          proxytype: active
+      vars:
+        proxypackages:
+          - zabbix-proxy-sqlite3
+          - zabbix-agent
+      

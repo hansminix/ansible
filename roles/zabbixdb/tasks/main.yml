@@ -1,0 +1,46 @@
+- name: Set password for root user
+  mysql_user:
+    name: "root"
+    password: "{{ mysql_password }}"
+    priv: '*.*:ALL,GRANT'
+    host: 'localhost'
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    state: present
+
+- name: Save root password in .my.cnf
+  template:
+    src: root_cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    mode: '0600'
+
+- name: Check if database exists
+  shell: mysql -e "select * from zabbix.hosts limit 1" -sN
+  register: database_exists
+  ignore_errors: True
+
+#If database_exists.rc==0 database exists, and database setup is not necessary
+- name: Setup database when zabbix.hosts does not exist
+  block:
+  - name: Create Zabbix Database
+    community.mysql.mysql_db:
+      login_host: ""
+      name: zabbix
+      encoding: utf8mb4
+      state: present
+      login_unix_socket: /var/lib/mysql/mysql.sock
+  - name: Create database user with name 'zabbix' and password for zabbix db
+    community.mysql.mysql_user:
+      login_host: ""
+      name: zabbix
+      password: "{{ dbpasswd }}"
+      priv: 'zabbix.*:ALL'
+      state: present
+      login_unix_socket: /var/lib/mysql/mysql.sock
+  - name: Set global log_bin_trust_function_creators to 1
+    shell: mysql -e "set global log_bin_trust_function_creators = 1;" 
+  - name: Setup DB schema
+    shell: zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mysql --default-character-set=utf8 zabbix
+  - name:  Set global log_bin_trust_function_creators to 0
+    shell: mysql -e "set global log_bin_trust_function_creators = 0;"
+  when: database_exists.rc

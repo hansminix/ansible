@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: yes
+
+  tasks:
+  - name: Install Mariadb packages
+    ansible.builtin.package:
+      use: apt
+      name: 
+        - mariadb-server
+        - mariadb-client
+        - python3-pymysql
+      state: present
+  - name: Create Zabbix Database
+    community.mysql.mysql_db:
+      login_host: ""
+      name: zabbix
+      encoding: utf8mb4
+      state: present
+      login_unix_socket: /run/mysqld/mysqld.sock
+  - name: Create database user with name 'zabbix' and password '12345' foor zabbix db
+    community.mysql.mysql_user:
+      login_host: ""
+      name: zabbix
+      password: 12345
+      priv: 'zabbix.*:ALL'
+      state: present
+      login_unix_socket: /run/mysqld/mysqld.sock
+
+      - name: Setup zabbix database on server
+        include_role:
+          name: zabbixdb
+      - name: Modify Zabbix configuration file
+        ansible.builtin.lineinfile:
+          path: "{{ zabbixconffile }}"
+          regexp: '(^# |^){{ item.key }}'
+          line: "{{ item.key }}={{ item.value }}"
+        with_dict: "{{ zabbixconf }}"
+        no_log: true

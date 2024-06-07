@@ -1,0 +1,47 @@
+- name: Install base packages for all servers
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+
+- name: Validate unix socket loaded in mariadb config.
+  ansible.builtin.lineinfile:
+    path: /etc/my.cnf.d/mariadb-server.cnf
+    state: present
+    insertafter: "[mysqld]"
+    line: "plugin-load-add = auth_socket.so"
+  when: "'mariadb-server' in packages"
+
+- name: Start Webserver and Mysql
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: 
+    - httpd
+    - mariadb
+  when: "'mariadb-server' in packages"
+
+- name: Create a zabbix home directory if it does not exist
+  ansible.builtin.file:
+    path: /var/lib/zabbix
+    state: directory
+    owner: zabbix
+    group: zabbix
+    mode: '0755'
+
+- name: Install zabbix snmptrap receiver
+  ansible.builtin.copy:
+    src: zabbix_trap_receiver.pl
+    dest: /var/lib/zabbix/zabbix_trap_receiver.pl
+    owner: zabbix
+    group: zabbix
+    mode: '0750'
+
+- name: Configure SNMP trap daemon
+  ansible.builtin.lineinfile:
+    path: /etc/snmp/snmptrapd.conf
+    line: "{{ item }}"
+  loop: 
+    - "perl do \"/var/lib/zabbix/zabbix_trap_receiver.pl\";"
+    - "authCommunity execute publicmindef"
+  no_log: true

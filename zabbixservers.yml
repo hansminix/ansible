@@ -1,0 +1,41 @@
+---
+  - name: Install and configure zabbix servers
+    hosts: zabbix
+    become: true
+      
+    tasks:
+      - name: Install base packages for all servers
+        ansible.builtin.dnf:
+          name: "{{ packages }}"
+          state: present
+      - name: Configure SNMP trap daemon
+        ansible.builtin.lineinfile:
+          path: /etc/snmp/snmptrapd.conf
+          line: "{{ item }}"
+        loop: 
+          - "authCommunity execute publicmindef"
+          - "perl do \"/var/lib/zabbix/zabbix_trap_receiver.pl\";"
+        no_log: true
+      - name: Create a zabbix home directory if it does not exist
+        ansible.builtin.file:
+          path: /var/lib/zabbix
+          state: directory
+          owner: zabbix
+          group: zabbix
+          mode: '0755'
+      - name: Install base zabbix files
+        ansible.builtin.copy:
+          src: "{{ item.filename }}"
+          dest: "{{ item.filedestination }}"
+          owner: "{{ item.fileowner }}"
+          group: "{{ item.filegroup }}"
+          mode: "{{ item.filemode }}"
+        loop:
+          "{{ zabbixfiles }}"
+      - name: Start and enable generic services
+        ansible.builtin.service:
+          name: "{{ item }}"
+          state: started
+          enabled: true
+        loop: 
+          "{{ zabbixservices }}"

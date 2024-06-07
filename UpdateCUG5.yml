@@ -10,6 +10,7 @@
     - name: Here are my custom common handlers
       # You can also look at include_tasks: handlers.yml
       import_tasks: handlers.yml
+    become: true
       
     tasks:
       - name: Include Backup

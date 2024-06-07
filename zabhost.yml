@@ -1,0 +1,13 @@
+---
+databases:
+  hosts:
+    zabbix60.lan:
+app_servers:
+  hosts:
+    zabbix60.lan:
+frontends:
+  hosts:
+    zabbix60.lan:
+zabbix:
+  hosts:
+    zabbix60.lan:

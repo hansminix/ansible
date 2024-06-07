@@ -1,0 +1,20 @@
+---
+- hosts: all
+  gather_facts: false
+  tasks:
+  #- name: Initialize Zabbix API
+  #  run_once: true
+    #set_fact:
+    #  x_zabbix_web_ip: "{{ hostvars['zabbix60.lan']['ansible_host']}}"
+  - delegate_to: zabbix60.lan
+    vars:
+      ansible_network_os: community.zabbix.zabbix
+      ansible_connection: httpapi
+      ansible_user: Admin
+      ansible_password: zabbix
+      ansible_zabbix_url_path: ""
+    run_once: true
+    block:
+    - name: Create Host group
+      community.zabbix.zabbix_group:
+        host_groups: Testgroep
