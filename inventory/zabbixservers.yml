@@ -19,35 +19,57 @@ all:
             filemode: '0750'
         zabbixservices:
           - snmptrapd
-        
+        SNMPTrapperFile: /var/log/snmptrap/snmptrap.log
+        dbpasswd: DBS3cr3t
+        zabbixhome: /var/lib/zabbix
     zabbixservers:
       hosts:
-        zabbixserver.lan
+        zabbixserver.lan:
+          dbhost: localhost
       vars:
         serverpackages:
           - zabbix-server-mysql 
           - zabbix-web-mysql 
           - zabbix-apache-conf 
+          - zabbix-selinux-policy 
+        mysql_password: heelmoeilijkwachtwoord1234
+        serverconf:
+          DBHost: "{{ dbhost }}"
+          DBHost: localhost
+          DBName: zabbix
+          DBUser: zabbix
+          DBPassword: "{{ dbpasswd }}"
+          SNMPTrapperFile: "{{ SNMPTrapperFile }}"
+          StartSNMPTrapper: "1"
+          AllowUnsupportedDBVersions: "1"
+        serverconffile: /etc/zabbix/zabbix_server.conf
+    zabbixdbservers:
+      hosts:
+        zabbixserver.lan
+      vars:
+        dbserverpackages:
+          - zabbix-server-mysql 
           - zabbix-sql-scripts 
           - zabbix-selinux-policy 
           - mariadb-server
           - python3-PyMySQL
         dbpasswd: DBS3cr3t
         mysql_password: heelmoeilijkwachtwoord1234
-        zabbixconf:
-          DBHost: localhost
-          DBName: zabbix
-          DBUser: zabbix
-          DBPassword: DBS3cr3t
-          SNMPTrapperFile: /var/log/snmptrap/snmptrap.log
-          StartSNMPTrapper: 1
-        zabbixconffile: /etc/zabbix/zabbix_server.conf
     zabbixproxies:
       hosts:
         zabbixproxy.lan:
-          proxytype: active
+          #proxymode: 0=active, 1=passive
+          proxymode: "0"
+          zabbixserver: zabbixserver.lan
       vars:
         proxypackages:
           - zabbix-proxy-sqlite3
           - zabbix-agent
+        proxyconf:
+          SNMPTrapperFile: "{{ SNMPTrapperFile }}"
+          StartSNMPTrapper: 1
+          DBName: "{{ zabbixhome }}/zabbixproxy.sqlite"
+          Server: "{{ zabbixserver }}"
+          ProxyMode: "{{ proxymode }}"
+        proxyconffile: /etc/zabbix/zabbix_proxy.conf
       

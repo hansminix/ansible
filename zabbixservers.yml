@@ -1,10 +1,10 @@
 ---
-  - name: Install and configure zabbix servers
+  - name: Install and configure zabbix servers and proxies
     hosts: zabbix
     become: true
       
     tasks:
-      - name: Install base packages for all servers
+      - name: Install base packages for all servers and proxies
         ansible.builtin.dnf:
           name: "{{ packages }}"
           state: present
@@ -18,7 +18,7 @@
         no_log: true
       - name: Create a zabbix home directory if it does not exist
         ansible.builtin.file:
-          path: /var/lib/zabbix
+          path: "{{ zabbixhome }}"
           state: directory
           owner: zabbix
           group: zabbix
@@ -39,3 +39,16 @@
           enabled: true
         loop: 
           "{{ zabbixservices }}"
+      - name: Install and configure database servers
+        include_role:
+          name: zabbixdb
+        when: "'zabbixdbservers' in group_names"
+      - name: Install and configure servers
+        include_role:
+          name: zabbixserver
+        when: "'zabbixservers' in group_names"
+      - name: Install and configure proxies
+        include_role:
+          name: zabbixproxy
+        when: "'zabbixproxies' in group_names"
+

@@ -37,11 +37,4 @@
     group: zabbix
     mode: '0750'
 
-- name: Configure SNMP trap daemon
-  ansible.builtin.lineinfile:
-    path: /etc/snmp/snmptrapd.conf
-    line: "{{ item }}"
-  loop: 
-    - "perl do \"/var/lib/zabbix/zabbix_trap_receiver.pl\";"
-    - "authCommunity execute publicmindef"
-  no_log: true
+

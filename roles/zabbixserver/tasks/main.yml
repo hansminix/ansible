@@ -1,0 +1,19 @@
+- name: Install Zabbix server packages
+  ansible.builtin.dnf:
+    name: "{{ serverpackages }}"
+    state: present
+- name: Modify Zabbix configuration file
+  ansible.builtin.lineinfile:
+    path: "{{ serverconffile }}"
+    regexp: '(^# |^){{ item.key }}'
+    line: "{{ item.key }}={{ item.value }}"
+  with_dict: "{{ serverconf }}"
+  no_log: true
+- name: Start Webserver and Zabbix server
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  loop: 
+    - httpd
+    - zabbix-server
