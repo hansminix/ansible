@@ -2,6 +2,7 @@
   ansible.builtin.dnf:
     name: "{{ serverpackages }}"
     state: present
+  notify: restart_zbxservices
 - name: Modify Zabbix configuration file
   ansible.builtin.lineinfile:
     path: "{{ serverconffile }}"
@@ -9,11 +10,4 @@
     line: "{{ item.key }}={{ item.value }}"
   with_dict: "{{ serverconf }}"
   no_log: true
-- name: Start Webserver and Zabbix server
-  ansible.builtin.service:
-    name: "{{ item }}"
-    state: restarted
-    enabled: true
-  loop: 
-    - httpd
-    - zabbix-server
+  notify: restart_zbxservices

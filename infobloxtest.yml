@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  vars:
+    nios_provider:
+      host: infoblox.lan
+      username: admin
+      password: infoblox
+      wapi_version: "2.12"
+    ipaddr: "[]"
+
+  connection: local
+  tasks:
+  - name: return next available network for network-container
+    set_fact:
+      networkaddr: "{{ lookup('nios_next_network', '10.0.0.0/20', cidr=24, num=2, provider=nios_provider) }}"
+  - name: create network
+    infoblox.nios_modules.nios_network:
+      network: "{{ item }}"
+      options:
+        - name: domain-name
+          value: mindef.nl
+      extattrs:
+        Site: Test Site
+      comment: Created with Ansible
+      state: present
+      provider: "{{ nios_provider }}"
+    with_items: "{{ networkaddr }}"
+  - name: return next available IP address for all networks 
+    block:
+      - name: Get list of network
+        ansible.builtin.set_fact:
+          ipaddrone: "{{ lookup('infoblox.nios_modules.nios_next_ip', item, num=6, provider=nios_provider) }}"
+      - name: Add new list to sum of lists
+        ansible.builtin.set_fact:
+          ipaddr: "{{ ipaddr + ipaddrone }}"
+    with_items: "{{ networkaddr }}"
+  - name: Create reservation on every address
+    infoblox.nios_modules.nios_fixed_address:
+      name: reservation
+      ipaddr: "{{ item }}"
+      mac: 00:00:00:00:00:00
+      network_view: default
+      comment: this is a test comment
+      state: present
+    with_items: "{{ ipaddr }}"  

@@ -8,3 +8,23 @@
   tasks:
   - name: Loop over subelements of the dictionary
     debug: msg="test2={{ test2 }}"
+  - name: Make directories for mibs
+    ansible.builtin.file:
+      path: "/var/lib/snmp/mibs/{{ item.path }}"
+      state: directory
+      mode: "755"
+      owner: root
+      group: root
+    with_filetree: "/var/lib/snmp/mibs/"
+    when: item.state=='directory'
+    no_log: true
+  - name: Copy snmp mib files
+    ansible.builtin.copy:
+      src: "/var/lib/snmp/mibs/{{ item.path }}"
+      dest: "/var/lib/snmp/mibs/{{ item.path }}"
+      mode: "644"
+      owner: "root"
+      group: "root"
+    with_filetree: "/var/lib/snmp/mibs/"
+    when: item.state=='file'
+    no_log: true

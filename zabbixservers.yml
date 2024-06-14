@@ -2,7 +2,10 @@
   - name: Install and configure zabbix servers and proxies
     hosts: zabbix
     become: true
-      
+    handlers:
+      - name: Import global handlers for restarting services
+        # You can also look at include_tasks: handlers.yml
+        import_tasks: global_handlers.yml
     tasks:
       - name: Install base packages for all servers and proxies
         ansible.builtin.dnf:
@@ -16,6 +19,7 @@
           - "authCommunity execute publicmindef"
           - "perl do \"/var/lib/zabbix/zabbix_trap_receiver.pl\";"
         no_log: true
+        notify: restart_snmptrapd
       - name: Create a zabbix home directory if it does not exist
         ansible.builtin.file:
           path: "{{ zabbixhome }}"
@@ -51,4 +55,18 @@
         include_role:
           name: zabbixproxy
         when: "'zabbixproxies' in group_names"
+      - name: Create tar on local server from MIB directory
+        community.general.archive:
+          path: /var/lib/snmp/mibs/
+          dest: /tmp/snmpmibs.tgz
+          format: gz
+        run_once: true
+        delegate_to: localhost
+        become: false
+      - name: Extract SNMP MIB tar file
+        ansible.builtin.unarchive:
+          src: /tmp/snmpmibs.tgz
+          dest: /var/lib/snmp/mibs/
+        notify: restart_snmpsrvs
+
 

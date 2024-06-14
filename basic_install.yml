@@ -1,0 +1,28 @@
+---
+- hosts: 192.168.178.234
+  gather_facts: true
+  become: yes
+  vars:
+    ntppool: 'nl.pool.ntp.org'
+    timezone: "Europe/Amsterdam"
+  tasks:
+  - name: Set NTP server configuration
+    ansible.builtin.replace:
+      dest: /etc/chrony.conf
+      regexp: '^pool .*$'
+      replace: "pool {{ ntppool }} iburst"
+  - name: Install ntpstat
+    ansible.builtin.dnf:
+      name: "ntpstat"
+      state: present
+  - name: Restart NTP server
+    ansible.builtin.service:
+      name: chronyd
+      state: restarted
+  - name: Set timezone
+    ansible.builtin.shell: "timedatectl set-timezone {{ timezone }}"
+  - name: Set SELinux configuration to permissive
+    ansible.builtin.replace:
+      dest: /etc/selinux/config
+      regexp: '^SELinux=.*$'
+      replace: "SELINUX=permissive"

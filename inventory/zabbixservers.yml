@@ -35,7 +35,6 @@ all:
         mysql_password: heelmoeilijkwachtwoord1234
         serverconf:
           DBHost: "{{ dbhost }}"
-          DBHost: localhost
           DBName: zabbix
           DBUser: zabbix
           DBPassword: "{{ dbpasswd }}"
@@ -43,6 +42,12 @@ all:
           StartSNMPTrapper: "1"
           AllowUnsupportedDBVersions: "1"
         serverconffile: /etc/zabbix/zabbix_server.conf
+        zbxservices:
+          - httpd
+          - zabbix-server
+        snmpdepservices:
+          - zabbix-server
+          - snmptrapd
     zabbixdbservers:
       hosts:
         zabbixserver.lan
@@ -72,4 +77,10 @@ all:
           Server: "{{ zabbixserver }}"
           ProxyMode: "{{ proxymode }}"
         proxyconffile: /etc/zabbix/zabbix_proxy.conf
+        snmpdepservices:
+          - zabbix-proxy
+          - snmptrapd
+        zbxservices:
+          - httpd
+          - zabbix-proxy
       

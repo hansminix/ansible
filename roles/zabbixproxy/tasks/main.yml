@@ -2,6 +2,7 @@
   ansible.builtin.dnf:
     name: "{{ proxypackages }}"
     state: present
+  notify: restart_zbxservices
 - name: Modify Zabbix configuration file
   ansible.builtin.lineinfile:
     path: "{{ proxyconffile }}"
@@ -9,10 +10,4 @@
     line: "{{ item.key }}={{ item.value }}"
   with_dict: "{{ proxyconf }}"
   no_log: true
-- name: Start Proxy
-  ansible.builtin.service:
-    name: "{{ item }}"
-    state: restarted
-    enabled: true
-  loop: 
-    - zabbix-proxy
+  notify: restart_zbxservices
