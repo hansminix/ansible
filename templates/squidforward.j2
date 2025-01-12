@@ -1,0 +1,48 @@
+{# Template voor forward proxy configuraties #}
+{# Eerst source acl #}
+#Source ACL's
+{% for fwp in  fwps %}
+acl {{ fwp.name }}_src src {{ fwp.ipaddress }}
+{% endfor %}
+
+#Destination host ACL's
+{# Nu destination host acl #}
+{% for dh in  dhs %}
+acl {{ dh.name }}_host_dst dstdomain {{ dh.destination }}
+{% endfor %}
+
+#URL Regex ACL's
+{# Nu url_regex acl #}
+{% for du in  dus %}
+acl {{ du.name }}_url_dst url_regex -i {{ du.destination }}
+{% endfor %}
+
+#Allow access to cache for destination hosts and localhost (squidclient)
+{# Nu cache access voor bestaande destination domains #}
+{% for dhname in dhnames %}
+http_access allow {{ dhname.name }}_src {{ dhname.name }}_host_dst
+http_access allow localhost {{ dhname.name }}_host_dst
+note dest_acl {{ dhname.name }}_host_dst
+{% endfor %}
+
+#Allow access to cache for destination urls and localhost (squidclient)
+{# Nu cache access voor bestaande destination url_regex #}
+{% for duname in dunames %}
+http_access allow {{ duname.name }}_src {{ duname.name }}_url_dst
+http_access allow localhost {{ duname.name }}_url_dst
+note dest_acl {{ duname.name }}_url_dst
+{% endfor %}
+
+#Redirect to cache_peer for dest_hosts
+{% for cpdh in  cpdhs %}
+always_direct deny {{ cpdh.scname }}_host_dst
+cache_peer_access {{ cpdh.cpname }} allow {{ cpdh.scname }}_src {{ cpdh.scname }}_host_dst
+never_direct allow {{ cpdh.scname }}_host_dst
+{% endfor %}
+
+#Redirect to cache_peer for dest_urls
+{% for cpdu in  cpdus %}
+always_direct deny {{ cpdu.scname }}_host_dst
+cache_peer_access {{ cpdu.cpname }} allow {{ cpdu.scname }}_src {{ cpdu.scname }}_url_dst
+never_direct allow {{ cpdu.scname }}_host_dst
+{% endfor %}

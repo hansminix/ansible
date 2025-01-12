@@ -1,0 +1,21 @@
+- name: Query mysql DB for cachepeer configurations
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select cp.name, cp.destination, cp.destination_port, cp.options from cachepeer cp inner join squidconfig sc on cp.squidconfig_id=sc.id inner join environment env on sc.environment_id=env.id where env.name = '{{ squid_env }}'"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting cachepeer dictionary
+  ansible.builtin.set_fact:
+    cps: "{{ sql_items.query_result.0 }}"
+- name: Create cachepeers configuration
+  ansible.builtin.template:
+    owner: root
+    group: proxy
+    mode: '0640'
+    src: cachepeer.j2
+    dest: "/etc/squid/cachepeer/{{ squid_env }}.conf"
+    backup: yes
+  register: cpresults
+  notify: Restart Squid

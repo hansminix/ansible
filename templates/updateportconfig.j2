@@ -1,5 +1,11 @@
 #Always add localhost with 3128 for squidclient
 http_port 127.0.0.1:3128
+
+#Add ports from configuration
 {% for port in ports %}
-http_port {{ ansible_eth0.ipv4.address }}:{{ port.port }} {% if ports.options %} {{ ports.options }} {% endif %}
+{# the IP address of the requested interface is read from the SQL command, by creating the index using the format function. #}
+http_port {{ hostvars[inventory_hostname]["ansible_{}".format(interfaces[port.interface])]['ipv4']['address'] }}:{{ port.port }} {% if port.reverse %} accel {% if port.certificate %} tls-cert=/etc/squid/ssl/{{port.certificate}} {% endif %}{% endif %}{% if port.options %} {{ port.options }} {% endif %} 
+{% if port.vipaddress %}
+http_port {{ port.vipaddress }}:{{ port.port }} {% if port.reverse %} accel {% endif %}{% if port.options %} {{ port.options }} {% endif %} 
+{% endif %}
 {% endfor %}

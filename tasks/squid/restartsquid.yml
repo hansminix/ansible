@@ -1,0 +1,42 @@
+- name: Restart Squid
+  ansible.builtin.service:
+    name: squid
+    state: "restarted"
+    enabled: true
+  ignore_errors: true
+  register: restart_squid
+  when: portresults.changed or certresults.changed
+- debug:
+    var: restart_squid
+- name: Reload Squid
+  ansible.builtin.service:
+    name: squid
+    state: "reloaded"
+    enabled: true
+  ignore_errors: true
+  register: reload_squid
+  when: cpresults.changed or fwpresults.changed or scresults.changed
+- debug:
+    var: reload_squid
+- name: Restore configurations when restart fails
+  ansible.builtin.copy:
+    src: "{{ item.backup_file }}"
+    dest: "{{ item.dest }}"
+    remote_src: true
+  when: ((restart_squid.changed and restart_squid.failed) or (reload_squid.changed and reload_squid.failed)) and item.changed 
+  with_items:
+    - "{{ portresults }}"
+    - "{{ cpresults }}"
+    - "{{ fwpresults }}"
+    - "{{ certresults }}"    
+    - "{{ scresults }}"
+- name: Make sure squid is running again
+  ansible.builtin.service:
+    name: squid
+    state: "started"
+    enabled: true
+- name: Fail playbook when restart fails
+  ansible.builtin.fail:
+    msg: "Errors in squid configuration, please check output"
+  when: (restart_squid.changed and restart_squid.failed) or (reload_squid.changed and reload_squid.failed)
+  

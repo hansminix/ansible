@@ -1,0 +1,71 @@
+{% raw %}
+# -------------------------------------------------------------------------------------------- #
+# Dit bestand wordt beheerd vanuit Ansible
+# Toelichting staat in https://dwrd.mindef.nl/sites/SWR008866/Gesloten%20Bibliotheek/IEGI/Componenten/Squid/Inrichtingsdocument/INT-IN010%20Basisinrichting%20Squid.docx
+# -------------------------------------------------------------------------------------------- #
+error_default_language nl
+error_directory /usr/share/squid/errors/nl/
+
+#Access logging 
+logformat AccessLog %{%d-%b-%Y %H:%M:%S}tl.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %un %Sh/%<a %mt %ea "%{User-Agent}>h"
+#ACL logging
+logformat UsageLog %{%d-%b-%Y %H:%M:%S}tl.%03tu hit: %{dest_acl}note
+{% endraw %}
+
+{# Turn off local logging in case of excessive logs #}
+{% if locallogging %}
+access_log daemon:/var/log/squid/access.log AccessLog
+access_log daemon:/var/log/squid/usage.log UsageLog
+{% endif %}
+logfile_rotate 0
+#Remote logging, depends on syslog configuration
+access_log syslog:local6.info AccessLog
+access_log syslog:local6.info UsageLog
+
+cache_log /var/log/squid/cache.log 
+strip_query_terms off
+
+#Algemeen		 
+httpd_suppress_version_string on
+request_header_access X-Forwarded-For deny all
+pipeline_prefetch 0
+
+coredump_dir /var/log/squid
+cache_effective_user proxy
+maximum_object_size 512 KB
+cache_replacement_policy lru
+memory_replacement_policy lru
+cache_store_log none
+cache_mem 256 MB
+maximum_object_size_in_memory 256 KB
+max_filedescriptors 65535
+dns_v4_first on
+
+#Standaard acccess voor squidclient
+http_access allow localhost manager
+http_access deny manager
+
+#ICAP logging
+icap_enable on
+adaptation_send_username on
+adaptation_send_client_ip on
+icap_service icap_resp respmod_precache 0 icap://127.0.0.1:1344/echo
+icap_service icap_req reqmod_precache 0 icap://localhost:1344/echo
+icap_service_failure_limit -1
+icap_preview_enable off
+
+#network
+include /etc/squid/network/*.conf
+#cachepeer
+include /etc/squid/cachepeer/*.conf
+#forwardproxy
+include /etc/squid/forward/*.conf
+#other
+
+#Algemene drop regel					
+http_access deny all
+
+#Extra deny op ICAP om overbelasting AV scanners te voorkomen
+adaptation_access icap_req deny all
+adaptation_access icap_resp deny all
+

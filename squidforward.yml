@@ -1,0 +1,105 @@
+- name: Query mysql DB for forward sources
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select sc.name, ss.ipaddress, env.name as envname from squidconfig sc inner join environment env on sc.environment_id=env.id left join squidsource ss on sc.id = ss.squidconfig_id  where env.name = '{{ squid_env }}' ORDER by sc.name"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting forward proxy sources
+  ansible.builtin.set_fact:
+    fwps: "{{ sql_items.query_result.0 }}"
+- ansible.builtin.fail:
+    msg: "No source address for squid configuratie {{ item.name }}"
+  when: not item.ipaddress
+  with_items: "{{ fwps }}"
+- name: Get all destinations to check if they are available
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select sc.name, count(dh.destination) as dhcnt, count(du.destination) as ducnt, env.name as envname from squidconfig sc inner join environment env on sc.environment_id=env.id left join dest_host dh on sc.id = dh.squidconfig_id left join dest_url du on sc.id = du.squidconfig_id where env.name = '{{ squid_env }}' GROUP by sc.name; "
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+- name: Setting destination counters
+  ansible.builtin.set_fact:
+    alldests: "{{ sql_items.query_result.0 }}"
+- ansible.builtin.fail:
+    msg: "No destinations for squid configuratie {{ item.name }}"
+  when: not item.ducnt + item.dhcnt
+  with_items: "{{ alldests }}"
+- name: Query mysql DB for forward destinationhosts
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select sc.name, dh.destination, env.name as envname from squidconfig sc inner join environment env on sc.environment_id=env.id inner join dest_host dh on dh.squidconfig_id = sc.id where env.name = '{{ squid_env }}' ORDER by sc.name"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting forward proxy destination hosts
+  ansible.builtin.set_fact:
+    dhs: "{{ sql_items.query_result.0 }}"
+- name: Query mysql DB for forward destination urls
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select sc.name, du.destination, env.name as envname from squidconfig sc inner join environment env on sc.environment_id=env.id inner join dest_url du on du.squidconfig_id = sc.id where env.name = '{{ squid_env }}' ORDER by sc.name"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting forward proxy destination urls
+  ansible.builtin.set_fact:
+    dus: "{{ sql_items.query_result.0 }}"
+- name: Query mysql DB for forward destination host names 
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select DISTINCT sc.name from squidconfig sc inner join environment env on sc.environment_id=env.id inner join dest_host dh on dh.squidconfig_id = sc.id where env.name = '{{ squid_env }}' ORDER by sc.name"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting forward proxy destination host names
+  ansible.builtin.set_fact:
+    dhnames: "{{ sql_items.query_result.0 }}"
+- name: Query mysql DB for forward destination url names 
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select DISTINCT sc.name from squidconfig sc inner join environment env on sc.environment_id=env.id inner join dest_url dh on dh.squidconfig_id = sc.id where env.name = '{{ squid_env }}' ORDER by sc.name"
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting forward proxy destination url names
+  ansible.builtin.set_fact:
+    dunames: "{{ sql_items.query_result.0 }}"
+- name: Query mysql DB for cachepeer configurations with destination URL
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select cp.name as cpname, sc.name as scname from cachepeer cp join squidconfig sc on cp.squidconfig_id=sc.id JOIN environment env on env.id=sc.environment_id INNER join dest_url du on du.squidconfig_id=sc.id where env.name='{{ squid_env }}' group by cp.name; "
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting cachepeer destination host dictionary
+  ansible.builtin.set_fact:
+    cpdus: "{{ sql_items.query_result.0 }}"
+- name: Query mysql DB for cachepeer configurations with destination host
+  community.mysql.mysql_query:
+    login_db: squidconf
+    query: "select cp.name as cpname, sc.name as scname from cachepeer cp join squidconfig sc on cp.squidconfig_id=sc.id JOIN environment env on env.id=sc.environment_id INNER join dest_host dh on dh.squidconfig_id=sc.id where env.name='{{ squid_env }}' group by cp.name; "
+    login_user: squidconf
+    login_password: Instruct3
+  register: sql_items
+  delegate_to: localhost
+- name: Setting cachepeer destination host dictionary
+  ansible.builtin.set_fact:
+    cpdhs: "{{ sql_items.query_result.0 }}"
+- name: Create forward proxy configuration
+  ansible.builtin.template:
+    owner: root
+    group: proxy
+    mode: '0640'
+    src: squidforward.j2
+    dest: "/etc/squid/forward/{{ squid_env }}.conf"
+    backup: yes
+  register: fwpresults
+  notify: Restart Squid

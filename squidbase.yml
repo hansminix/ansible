@@ -1,0 +1,82 @@
+---
+  - name: Install and configure squidservers
+    hosts: squid
+    become: true
+    force_handlers: true
+    handlers:
+      - name: Import global handlers for restarting services
+        # You can also look at include_tasks: handlers.yml
+        import_tasks: global_handlers.yml
+    tasks:
+      - name: Create squid directories
+        ansible.builtin.file:
+          path: "{{ item.filename }}"
+          state: directory
+          owner: "{{ item.fileowner }}"
+          group: "{{ item.filegroup }}"
+          mode: "{{ item.filemode }}"
+        loop:
+          "{{ squiddirs }}"
+      - name: Set IPv4 non local bind
+        ansible.builtin.lineinfile:
+          path: /etc/sysctl.d/11-squid.conf
+          line: "net.ipv4.ip_nonlocal_bind = 1"
+          create: yes
+          owner: "root"
+          group: "root"
+          mode: "0640"
+          state: present
+        notify: Reload IPv4 nonlocal
+      - name: Create cachepeers configuration
+        ansible.builtin.template:
+          owner: root
+          group: proxy
+          mode: '0640'
+          src: squidconf.j2
+          dest: "/etc/squid/squid.conf"
+          backup: yes
+        register: scresults
+        notify: Restart Squid
+      - name: Query mysql DB for ports
+        community.mysql.mysql_query:
+          login_db: squidconf
+          query: "select sp.interface, sp.port, sp.reverse, sp.options, sp.certificate, env.name, env.vipaddress from squidport sp inner join environment env on sp.environment_id=env.id where env.name = '{{ squid_env }}'"
+          login_user: squidconf
+          login_password: Instruct3
+        register: sql_items
+        delegate_to: localhost
+      - name: Setting port dictionary
+        ansible.builtin.set_fact:
+          ports: "{{ sql_items.query_result.0 }}"
+      - name: Create ordered list with interface names
+        ansible.builtin.set_fact:
+          interfaces: "{{ ansible_interfaces | difference(['lo']) | sort }}"
+      - name: Copy certificates
+        ansible.builtin.copy:
+          src: "files/ssl/{{ item.certificate }}"
+          dest: "/etc/squid/ssl/{{ item.certificate }}"
+          owner: "root"
+          group: "root"
+          mode: "0640"
+        loop:
+          "{{ ports }}"
+        when: item.certificate
+        register: certresults
+        notify: Restart Squid
+      - name: Create ports configuration
+        ansible.builtin.template:
+          owner: root
+          group: proxy
+          mode: '0640'
+          src: updateportconfig.j2
+          dest: "/etc/squid/network/{{ squid_env }}.conf"
+          backup: yes
+        register: portresults
+        notify: Restart Squid
+      - name: Include cachepeer configuration
+        ansible.builtin.include_tasks:
+          file: squidcachepeers.yml
+      - name: Include forward proxy configuration
+        ansible.builtin.include_tasks:
+          file: squidforward.yml
+        

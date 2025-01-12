@@ -1,0 +1,7 @@
+{% for port in ports %}
+{{ port %}
+http_port {{ hostvars[inventory_hostname]["ansible_{}".format(interfaces[port.interface])]['ipv4']['address'] }}:{{ port.port }} {% if port.reverse %} accel {% endif %}{% if port.options %} {{ port.options }} {% endif %} 
+{% if port.vipaddress %}
+http_port {{ port.vipaddress }}:{{ port.port }} {% if port.reverse %} accel {% endif %}{% if port.options %} {{ port.options }} {% endif %} 
+{% endif %}
+{% endfor %}

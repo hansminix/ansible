@@ -1,0 +1,29 @@
+all:
+  children:
+    squid:
+      hosts:
+        localhost:
+          ansible_connection: local
+      vars:
+        locallogging: true
+        squiddirs:
+          - filename: /etc/squid
+            fileowner: root
+            filegroup: root
+            filemode: '0755'
+          - filename: /etc/squid/cachepeer
+            fileowner: root
+            filegroup: root
+            filemode: '0755'
+          - filename: /etc/squid/forward
+            fileowner: root
+            filegroup: root
+            filemode: '0755'
+          - filename: /etc/squid/ssl
+            fileowner: root
+            filegroup: root
+            filemode: '0755'
+          - filename: /etc/squid/network
+            fileowner: root
+            filegroup: root
+            filemode: '0755'

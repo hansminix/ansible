@@ -2,6 +2,16 @@
 - hosts: all
   gather_facts: false
   tasks:
+  - name: Read CSV file
+    community.general.read_csv:
+      path: ../importzab.csv
+    register: users
+    delegate_to: localhost
+  - name: Loop over the dictionary
+    debug: 
+      msg: "{{ item }}"
+    loop: "{{ users.list }}"
+    delegate_to: localhost  
   #- name: Initialize Zabbix API
   #  run_once: true
     #set_fact:
@@ -16,5 +26,18 @@
     run_once: true
     block:
     - name: Create Host group
-      community.zabbix.zabbix_group:
-        host_groups: Testgroep
+      community.zabbix.zabbix_host:
+        host_name: "{{ item.hostnaam }}"
+        visible_name: "{{ item.merk + ' ' + item.omgeving + ' ' + item.datacenter + ' ' + item.hostnaam }}"
+        description: "{{ item.merk + ' ' + item.omgeving + ' ' + item.datacenter + ' ' + item.hostnaam }}"
+        host_groups: "{{ item.hostgroep }}"
+        interfaces:
+          - type: '1'
+            main: 1
+            useip: 0
+            dns: "{{ item.hostnaam }}"
+            port: '10050'
+        link_templates: "{{ item.template }}"
+        status: disabled
+        state: present
+      loop: "{{ users.list }}"

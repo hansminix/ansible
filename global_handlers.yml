@@ -14,3 +14,8 @@
     name: mariadb
     state: "restarted"
     enabled: true
+- name: Restart Squid
+  ansible.builtin.include_tasks:
+    file: tasks/squid/restartsquid.yml
+- name: Reload IPv4 nonlocal
+  ansible.builtin.shell: "sysctl -f /etc/sysctl.d/11-squid.conf"

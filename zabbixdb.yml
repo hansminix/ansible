@@ -27,14 +27,13 @@
       priv: 'zabbix.*:ALL'
       state: present
       login_unix_socket: /run/mysqld/mysqld.sock
-
-      - name: Setup zabbix database on server
-        include_role:
-          name: zabbixdb
-      - name: Modify Zabbix configuration file
-        ansible.builtin.lineinfile:
-          path: "{{ zabbixconffile }}"
-          regexp: '(^# |^){{ item.key }}'
-          line: "{{ item.key }}={{ item.value }}"
-        with_dict: "{{ zabbixconf }}"
-        no_log: true
+  - name: Setup zabbix database on server
+    include_role:
+      name: zabbixdb
+  - name: Modify Zabbix configuration file
+    ansible.builtin.lineinfile:
+      path: "{{ zabbixconffile }}"
+      regexp: '(^# |^){{ item.key }}'
+      line: "{{ item.key }}={{ item.value }}"
+    with_dict: "{{ zabbixconf }}"
+    no_log: true

@@ -28,3 +28,17 @@
     with_filetree: "/var/lib/snmp/mibs/"
     when: item.state=='file'
     no_log: true
+  - name: task 1
+    command: echo task1
+    register: task_result_1
+  - name: task 2
+    command: echo task2
+    register: task_result_2
+  - name: task 3
+    command: echo task3
+    register: task_result_3
+
+  - name: show results
+    debug:
+      msg: "Gewijzigd"
+    when: task_result_1.changed or task_result_2.changed or task_result_3.changed
